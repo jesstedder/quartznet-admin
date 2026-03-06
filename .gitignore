@@ -2,3 +2,6 @@
 bin/
 obj/
 *.user
+QuartzAdmin/QuartzAdmin.web/*.db
+QuartzAdmin/QuartzAdmin.web/*.db-shm
+QuartzAdmin/QuartzAdmin.web/*.db-wal
