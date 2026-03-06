@@ -1,0 +1,7 @@
+@model QuartzAdmin.web.Models.TriggerFireTimesModel
+@{
+    ViewData["Title"] = "Trigger Fire Times";
+}
+
+<h2>Fire Times</h2>
+@await Html.PartialAsync("_FireTimesPartial", Model)

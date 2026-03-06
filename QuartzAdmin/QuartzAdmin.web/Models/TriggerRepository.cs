@@ -1,83 +1,65 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using Quartz;
+using Quartz.Impl.Matchers;
 
+namespace QuartzAdmin.web.Models;
 
-namespace QuartzAdmin.web.Models
+public class TriggerRepository
 {
-    public class TriggerRepository
+    private readonly InstanceModel _quartzInstance;
+
+    public TriggerRepository(InstanceModel instance)
     {
-        private InstanceModel quartzInstance;
-        public TriggerRepository(string instanceName)
+        _quartzInstance = instance;
+    }
+
+    public async Task<ITrigger?> GetTrigger(string triggerName, string groupName)
+    {
+        var sched = await _quartzInstance.GetQuartzScheduler();
+        return await sched.GetTrigger(new TriggerKey(triggerName, groupName));
+    }
+
+    public async Task<IList<TriggerStatusModel>> GetAllTriggerStatus(string groupName)
+    {
+        var sched = await _quartzInstance.GetQuartzScheduler();
+        var keys = await sched.GetTriggerKeys(GroupMatcher<TriggerKey>.GroupEquals(groupName));
+        var triggerStatuses = new List<TriggerStatusModel>();
+
+        foreach (var key in keys)
         {
-            InstanceRepository repo = new InstanceRepository();
-            quartzInstance = repo.GetInstance(instanceName);
-        }
+            var trig = await sched.GetTrigger(key);
+            if (trig == null) continue;
+            var st = await sched.GetTriggerState(key);
+            var nextFireTime = trig.GetNextFireTimeUtc();
+            var lastFireTime = trig.GetPreviousFireTimeUtc();
 
-        public TriggerRepository(InstanceModel instance)
-        {
-            quartzInstance = instance;
-        }
-
-        public Trigger GetTrigger(string triggerName, string groupName)
-        {
-            IScheduler sched =quartzInstance.GetQuartzScheduler();
-
-
-            return sched.GetTrigger(triggerName, groupName);
-
-        }
-
-        public IList<TriggerStatusModel> GetAllTriggerStatus(string groupName)
-        {
-            IScheduler sched = quartzInstance.GetQuartzScheduler();
-            string[] triggerNames= sched.GetTriggerNames(groupName);
-            List<TriggerStatusModel> triggerStatuses = new List<TriggerStatusModel>();
-            foreach (string triggerName in triggerNames)
+            triggerStatuses.Add(new TriggerStatusModel
             {
-                Trigger trig = sched.GetTrigger(triggerName, groupName);
-                TriggerState st = sched.GetTriggerState(triggerName, groupName);
-                DateTime? nextFireTime = trig.GetNextFireTimeUtc();
-                DateTime? lastFireTime = trig.GetPreviousFireTimeUtc();
-                
-
-                triggerStatuses.Add(new TriggerStatusModel()
-                {
-                    TriggerName = triggerName,
-                    GroupName = groupName,
-                    State = st,
-                    NextFireTime = nextFireTime.HasValue?nextFireTime.Value.ToLocalTime().ToString():"",
-                    LastFireTime = lastFireTime.HasValue ? lastFireTime.Value.ToLocalTime().ToString() : "",
-                    JobName = trig.JobName
-                });
-
-            }
-
-            return triggerStatuses;
-
-
+                TriggerName = key.Name,
+                GroupName = groupName,
+                State = st,
+                NextFireTime = nextFireTime.HasValue ? nextFireTime.Value.ToLocalTime().ToString() : "",
+                LastFireTime = lastFireTime.HasValue ? lastFireTime.Value.ToLocalTime().ToString() : "",
+                JobName = trig.JobKey.Name
+            });
         }
+        return triggerStatuses;
+    }
 
-        public IList<TriggerStatusModel> GetAllTriggerStatus()
+    public async Task<IList<TriggerStatusModel>> GetAllTriggerStatus()
+    {
+        var groups = await _quartzInstance.FindAllGroups();
+        var triggerStatuses = new List<TriggerStatusModel>();
+        foreach (var group in groups)
         {
-            var groups = quartzInstance.FindAllGroups();
-            List<TriggerStatusModel> triggerStatuses = new List<TriggerStatusModel>();
-
-            foreach (string group in groups)
-            {
-                triggerStatuses.AddRange(GetAllTriggerStatus(group));
-            }
-
-            return triggerStatuses;
+            triggerStatuses.AddRange(await GetAllTriggerStatus(group));
         }
+        return triggerStatuses;
+    }
 
-        public IList<Trigger> GetTriggersForJob(string jobName, string groupName)
-        {
-            Trigger[] arrayOfTriggers = quartzInstance.GetQuartzScheduler().GetTriggersOfJob(jobName, groupName);
-            return arrayOfTriggers.ToList(); 
-        }
-
+    public async Task<IList<ITrigger>> GetTriggersForJob(string jobName, string groupName)
+    {
+        var sched = await _quartzInstance.GetQuartzScheduler();
+        var triggers = await sched.GetTriggersOfJob(new JobKey(jobName, groupName));
+        return triggers.ToList();
     }
 }

@@ -1,0 +1,11 @@
+@model QuartzAdmin.web.Models.InstanceModel
+@{
+    ViewData["Title"] = "Instance ID";
+}
+
+<h2>What Is My Instance ID?</h2>
+<p>It is: <strong>@Model?.InstanceID</strong> at @ViewData["MyTime"]</p>
+
+<p>
+    <a asp-action="Index" asp-controller="Home">Back to Home</a>
+</p>

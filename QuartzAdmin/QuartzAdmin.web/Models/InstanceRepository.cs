@@ -1,87 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using NHibernate;
-using NHibernate.Cfg;
-using NHibernate.Criterion;
-using Castle.ActiveRecord;
-using Iesi.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
+namespace QuartzAdmin.web.Models;
 
-namespace QuartzAdmin.web.Models
+public class InstanceRepository : IInstanceRepository
 {
-    public class InstanceRepository: IInstanceRepository
+    private readonly AppDbContext _context;
+
+    public InstanceRepository(AppDbContext context)
     {
-        public List<InstanceModel> GetAll()
+        _context = context;
+    }
+
+    public List<InstanceModel> GetAll()
+    {
+        return _context.Instances.Include(i => i.InstanceProperties).ToList();
+    }
+
+    public InstanceModel? GetByName(string instanceName)
+    {
+        return _context.Instances
+            .Include(i => i.InstanceProperties)
+            .FirstOrDefault(i => i.InstanceName == instanceName);
+    }
+
+    public InstanceModel? GetInstance(string instanceName) => GetByName(instanceName);
+
+    public void Save(InstanceModel instance)
+    {
+        var existing = _context.Instances
+            .Include(i => i.InstanceProperties)
+            .FirstOrDefault(i => i.InstanceID == instance.InstanceID);
+
+        if (existing == null)
         {
-            if(!ActiveRecordStarter.IsInitialized)
-                ActiveRecordStarter.Initialize();
-            
-            List<InstanceModel> instances = new List<InstanceModel>();
-
-            InstanceModel[] tmp_instances = InstanceModel.FindAll();
-            foreach (InstanceModel instance in tmp_instances)
-            {
-                instances.Add(instance);
-            }
-
-            return instances;
+            _context.Instances.Add(instance);
         }
+        _context.SaveChanges();
+    }
 
-        public InstanceModel GetInstanceByID(int instanceID)
-        {
-            if (!ActiveRecordStarter.IsInitialized)
-                ActiveRecordStarter.Initialize();
-
-            InstanceModel instance = new InstanceModel();
-
-            instance = InstanceModel.Find(instanceID);
-            
-            return instance;
-        }
-
-        public InstanceModel GetByName(string instanceName)
-        {
-            if (!ActiveRecordStarter.IsInitialized)
-                ActiveRecordStarter.Initialize();
-
-            InstanceModel instance = new InstanceModel();
-
-            instance = InstanceModel.FindFirst(Expression.Eq("InstanceName", instanceName));
-
-            return instance;
-        }
-
-        public InstanceModel GetInstance(string instanceName)
-        {
-            if (!ActiveRecordStarter.IsInitialized)
-                ActiveRecordStarter.Initialize();
-
-            InstanceModel instance = new InstanceModel();
-
-            instance = InstanceModel.FindFirst(Expression.Eq("InstanceName", instanceName));
-
-            return instance;
-        }
-
-
-        public void Save(InstanceModel instance)
-        {
-            if (!ActiveRecordStarter.IsInitialized)
-                ActiveRecordStarter.Initialize();
-
-
-            instance.Save();
-        }
-        public void Delete(InstanceModel instance)
-        {
-            if (!ActiveRecordStarter.IsInitialized)
-                ActiveRecordStarter.Initialize();
-
-
-            instance.Delete();
-        }
-
+    public void Delete(InstanceModel instance)
+    {
+        _context.Instances.Remove(instance);
+        _context.SaveChanges();
     }
 }

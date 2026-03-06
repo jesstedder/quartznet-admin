@@ -1,0 +1,43 @@
+@model QuartzAdmin.web.Models.InstanceViewModel
+@{
+    ViewData["Title"] = "Connect - " + Model?.Instance?.InstanceName;
+    ViewData["instanceName"] = Model?.Instance?.InstanceName;
+}
+
+<h3>Current Status of Scheduled Jobs</h3>
+@await Html.PartialAsync("_CurrentStatus")
+
+<h3>List of Registered Jobs</h3>
+
+<table id="regJobsTable">
+    <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Group</th>
+            <th>Description</th>
+            <th>Requests Recovery</th>
+            <th>Durable</th>
+            <th>Persist Data After Execution</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model?.Jobs ?? [])
+        {
+            <tr>
+                <td>
+                    <a asp-controller="Job" asp-action="Details"
+                       asp-route-instanceName="@Model!.Instance!.InstanceName"
+                       asp-route-groupName="@item.Key.Group"
+                       asp-route-itemName="@item.Key.Name">Details</a>
+                </td>
+                <td>@item.Key.Name</td>
+                <td>@item.Key.Group</td>
+                <td>@item.Description</td>
+                <td>@item.RequestsRecovery</td>
+                <td>@item.Durable</td>
+                <td>@item.PersistJobDataAfterExecution</td>
+            </tr>
+        }
+    </tbody>
+</table>

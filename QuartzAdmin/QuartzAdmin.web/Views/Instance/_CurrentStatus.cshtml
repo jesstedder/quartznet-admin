@@ -1,0 +1,53 @@
+@{
+    var instanceName = ViewData["instanceName"]?.ToString() ?? "";
+}
+
+<div id="triggerStatuses">
+    <table id="triggerStatusTable">
+        <thead>
+            <tr>
+                <th>Job</th>
+                <th>Group</th>
+                <th>Trigger</th>
+                <th>State</th>
+                <th>Next Fire Time</th>
+                <th>Last Fire Time</th>
+            </tr>
+        </thead>
+        <tbody id="triggerStatusBody">
+            <tr><td colspan="6">Loading...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script type="text/javascript">
+    (function () {
+        var instanceName = @System.Text.Json.JsonSerializer.Serialize(instanceName);
+        function loadStatuses() {
+            fetch("/JobExecution/GetCurrentTriggerStatusList/" + instanceName)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var tbody = document.getElementById("triggerStatusBody");
+                    if (!data || data.length === 0) {
+                        tbody.innerHTML = "<tr><td colspan='6'>No triggers found.</td></tr>";
+                        return;
+                    }
+                    tbody.innerHTML = data.map(function (t) {
+                        return "<tr>" +
+                            "<td><a href='/Job/Details/" + instanceName + "/" + t.groupName + "/" + t.jobName + "'>" + t.jobName + "</a></td>" +
+                            "<td>" + t.groupName + "</td>" +
+                            "<td><a href='/Trigger/Details/" + instanceName + "/" + t.groupName + "/" + t.triggerName + "'>" + t.triggerName + "</a></td>" +
+                            "<td>" + t.stateDesc + "</td>" +
+                            "<td>" + (t.nextFireTime || "") + "</td>" +
+                            "<td>" + (t.lastFireTime || "") + "</td>" +
+                            "</tr>";
+                    }).join("");
+                })
+                .catch(function () {
+                    document.getElementById("triggerStatusBody").innerHTML = "<tr><td colspan='6'>Error loading statuses.</td></tr>";
+                });
+        }
+        loadStatuses();
+        setInterval(loadStatuses, 5000);
+    })();
+</script>

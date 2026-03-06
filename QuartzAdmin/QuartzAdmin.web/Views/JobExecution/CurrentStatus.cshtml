@@ -1,0 +1,8 @@
+@{
+    ViewData["Title"] = "Current Status";
+    var groupName = ViewData["groupName"]?.ToString();
+    ViewData["instanceName"] = groupName;
+}
+
+<h2>Current Status for @groupName</h2>
+@await Html.PartialAsync("~/Views/Instance/_CurrentStatus.cshtml")

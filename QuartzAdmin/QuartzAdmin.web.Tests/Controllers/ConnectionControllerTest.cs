@@ -1,334 +1,210 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
+using Xunit;
 using QuartzAdmin.web.Controllers;
-using System.Web.Mvc;
-using QuartzAdmin.web.Tests.Fakes;
 using QuartzAdmin.web.Models;
+using QuartzAdmin.web.Tests.Fakes;
 
-namespace QuartzAdmin.web.Tests.Controllers
+namespace QuartzAdmin.web.Tests.Controllers;
+
+public class ConnectionControllerTest
 {
-    /// <summary>
-    /// Summary description for ConnectionControllerTest
-    /// </summary>
-    [TestClass]
-    public class ConnectionControllerTest
+    private static IFormCollection CreateFormCollection(Dictionary<string, string> values)
     {
-        #region Scaffolding
+        var dict = values.ToDictionary(k => k.Key, v => new StringValues(v.Value));
+        return new FormCollection(dict);
+    }
 
-        public ConnectionControllerTest()
+    private static T SetupController<T>(T controller) where T : Controller
+    {
+        controller.ControllerContext = new ControllerContext
         {
-            //
-            // TODO: Add constructor logic here
-            //
-        }
+            HttpContext = new DefaultHttpContext()
+        };
+        return controller;
+    }
 
-        private TestContext testContextInstance;
+    [Fact]
+    public void Create_Get_Should_Return_View()
+    {
+        var connectionController = SetupController(new ConnectionController(new FakeConnectionRepository()));
+        var viewResult = connectionController.Create() as ViewResult;
+        Assert.NotNull(viewResult);
+    }
 
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext
+    [Fact]
+    public void Create_Post_Should_Create_Connection_When_Valid()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var collection = CreateFormCollection(new Dictionary<string, string>
         {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
+            ["Name"] = "connection1",
+            ["ConnectionParameterKey1"] = "key1",
+            ["ConnectionParameterValue1"] = "value1"
+        });
 
-        #endregion
+        connectionController.Create(collection);
+        Assert.Equal(1, connectionRepository.Count);
+    }
 
-        #region Additional test attributes
-        //
-        // You can use the following additional attributes as you write your tests:
-        //
-        // Use ClassInitialize to run code before running the first test in the class
-        // [ClassInitialize()]
-        // public static void MyClassInitialize(TestContext testContext) { }
-        //
-        // Use ClassCleanup to run code after all tests in a class have run
-        // [ClassCleanup()]
-        // public static void MyClassCleanup() { }
-        //
-        // Use TestInitialize to run code before running each test 
-        // [TestInitialize()]
-        // public void MyTestInitialize() { }
-        //
-        // Use TestCleanup to run code after each test has run
-        // [TestCleanup()]
-        // public void MyTestCleanup() { }
-        //
-        #endregion
+    [Fact]
+    public void Create_Post_Should_Not_Create_Connection_When_Invalid()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var collection = new FormCollection(new Dictionary<string, StringValues>());
 
-        [TestMethod]
-        public void Create_Get_Should_Return_View()
+        connectionController.Create(collection);
+        Assert.Equal(0, connectionRepository.Count);
+    }
+
+    [Fact]
+    public void Create_Post_Should_Redisplay_With_Errors_When_Invalid()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var collection = new FormCollection(new Dictionary<string, StringValues>());
+
+        var viewResult = connectionController.Create(collection) as ViewResult;
+
+        Assert.NotNull(viewResult);
+        Assert.IsType<ConnectionModel>(viewResult.Model);
+        Assert.True(viewResult.ViewData.ModelState["Name"]?.Errors.Count > 0);
+    }
+
+    [Fact]
+    public void Create_Post_Should_Redisplay_With_Errors_When_Duplicate_Name()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 1, Name = "connection1" });
+
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var collection = CreateFormCollection(new Dictionary<string, string>
         {
-            // arrange
-            ConnectionController connectionController = new ConnectionController(new FakeConnectionRepository());
+            ["Name"] = "connection1",
+            ["ConnectionParameterKey1"] = "key1",
+            ["ConnectionParameterValue1"] = "value1"
+        });
 
-            // act
-            ViewResult viewResult = connectionController.Create() as ViewResult;
+        var viewResult = connectionController.Create(collection) as ViewResult;
+        Assert.True(viewResult?.ViewData.ModelState["Name"]?.Errors.Count == 1);
+    }
 
-            // assert
-            Assert.IsNotNull(viewResult);
-        }
+    [Fact]
+    public void Index_Get_Should_Return_View()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var viewResult = connectionController.Index() as ViewResult;
+        Assert.NotNull(viewResult);
+    }
 
-        [TestMethod]
-        public void Create_Post_Should_Create_Connection_When_Valid()
+    [Fact]
+    public void Index_Get_Should_Display_Connections()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 1, Name = "connection1" });
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 2, Name = "connection2" });
+
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var viewResult = connectionController.Index() as ViewResult;
+        var connectionList = viewResult?.Model as IEnumerable<ConnectionModel>;
+
+        Assert.NotNull(connectionList);
+        Assert.Equal(2, connectionList.Count());
+    }
+
+    [Fact]
+    public void Edit_Get_Should_Return_View_When_Valid_Id()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 1, Name = "connection1" });
+
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var viewResult = connectionController.Edit(1) as ViewResult;
+
+        Assert.NotNull(viewResult);
+    }
+
+    [Fact]
+    public void Edit_Get_Should_Display_Connection_When_Valid_Id()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 1, Name = "connection1" });
+
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var viewResult = connectionController.Edit(1) as ViewResult;
+        var connection = viewResult?.Model as ConnectionModel;
+
+        Assert.NotNull(connection);
+        Assert.Equal(1, connection.ConnectionId);
+    }
+
+    [Fact]
+    public void Edit_Get_Should_Display_Error_When_Invalid_Id()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var viewResult = connectionController.Edit(1) as ViewResult;
+
+        Assert.NotNull(viewResult);
+        Assert.Equal("NotFound", viewResult.ViewName);
+    }
+
+    [Fact]
+    public void Edit_Post_Should_Update_Connection_When_Valid()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 1, Name = "connection1" });
+
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var collection = CreateFormCollection(new Dictionary<string, string>
         {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
+            ["Name"] = "connectionA",
+            ["ConnectionParameterKey1"] = "key1",
+            ["ConnectionParameterValue1"] = "value1"
+        });
 
-            FormCollection formCollection = new FormCollection();
-            formCollection["Name"] = "connection1";
-            formCollection["ConnectionParameterKey1"] = "key1";
-            formCollection["ConnectionParameterValue1"] = "value1";
+        connectionController.Edit(1, collection);
+        var connection = connectionRepository.GetConnection(1);
 
-            connectionController.ValueProvider = formCollection.ToValueProvider();
+        Assert.Equal("connectionA", connection?.Name);
+    }
 
-            // act
-            ViewResult viewResult = connectionController.Create(formCollection) as ViewResult;
+    [Fact]
+    public void Edit_Post_Should_Redisplay_With_Errors_When_Invalid()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 1, Name = "connection1" });
 
-            // assert
-            Assert.IsTrue(connectionRepository.Count == 1);
-        }
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var collection = CreateFormCollection(new Dictionary<string, string> { ["Name"] = "" });
 
-        [TestMethod]
-        public void Create_Post_Should_Not_Create_Connection_When_Invalid()
+        var viewResult = connectionController.Edit(1, collection) as ViewResult;
+
+        Assert.NotNull(viewResult);
+        Assert.IsType<ConnectionModel>(viewResult.Model);
+        Assert.True(viewResult.ViewData.ModelState["Name"]?.Errors.Count > 0);
+    }
+
+    [Fact]
+    public void Edit_Post_Should_Redisplay_With_Errors_When_Duplicate_Name()
+    {
+        var connectionRepository = new FakeConnectionRepository();
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 1, Name = "connection1" });
+        connectionRepository.AddConnection(new ConnectionModel { ConnectionId = 2, Name = "connection2" });
+
+        var connectionController = SetupController(new ConnectionController(connectionRepository));
+        var collection = CreateFormCollection(new Dictionary<string, string>
         {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
+            ["Name"] = "connection2",
+            ["ConnectionParameterKey1"] = "key1",
+            ["ConnectionParameterValue1"] = "value1"
+        });
 
-            FormCollection formCollection = new FormCollection();
-            connectionController.ValueProvider = formCollection.ToValueProvider();
-
-            // act
-            ViewResult viewResult = connectionController.Create(formCollection) as ViewResult;
-
-            // assert
-            Assert.IsTrue(connectionRepository.Count == 0);
-        }
-
-        [TestMethod]
-        public void Create_Post_Should_Redisplay_With_Errors_When_Invalid()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-
-            FormCollection formCollection = new FormCollection();
-            connectionController.ValueProvider = formCollection.ToValueProvider();
-
-            // act
-            ViewResult viewResult = connectionController.Create(formCollection) as ViewResult;
-
-            // assert
-            Assert.IsTrue(viewResult.ViewData.Model is ConnectionModel);
-            Assert.IsTrue(viewResult.ViewData.ModelState["Name"].Errors.Count > 0);
-        }
-
-        [TestMethod]
-        public void Create_Post_Should_Redisplay_With_Errors_When_Duplicate_Name()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 1, Name = "connection1" });
-
-            FormCollection formCollection = new FormCollection();
-            formCollection["Name"] = "connection1";
-            formCollection["ConnectionParameterKey1"] = "key1";
-            formCollection["ConnectionParameterValue1"] = "value1";
-
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-            connectionController.ValueProvider = formCollection.ToValueProvider();
-
-            // act
-            ViewResult viewResult = connectionController.Create(formCollection) as ViewResult;
-
-            // assert
-            Assert.IsTrue(viewResult.ViewData.ModelState["Name"].Errors.Count == 1);
-        }
-
-        [TestMethod]
-        public void Index_Get_Should_Return_View()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-
-            // act
-            ViewResult viewResult = connectionController.Index() as ViewResult;
-
-            // assert
-            Assert.IsNotNull(viewResult);
-        }
-
-        [TestMethod]
-        public void Index_Get_Should_Display_Connections()
-        {
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 1, Name = "connection1" });
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 2, Name = "connection2" });
-
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-
-            // act
-            ViewResult viewResult = connectionController.Index() as ViewResult;
-            IEnumerable<ConnectionModel> connectionList = viewResult.ViewData.Model as IEnumerable<ConnectionModel>;
-
-            // assert
-            Assert.IsNotNull(connectionList);
-            Assert.IsTrue(connectionList.Count() == 2);
-        }
-
-        [TestMethod]
-        public void Edit_Get_Should_Return_View_When_Valid_Id()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 1, Name = "connection1" });
-
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-
-            // act
-            ViewResult viewResult = connectionController.Edit(1) as ViewResult;
-
-            // assert
-            Assert.IsNotNull(viewResult);
-        }
-
-        [TestMethod]
-        public void Edit_Get_Should_Display_Connection_When_Valid_Id()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 1, Name = "connection1" });
-
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-
-            // act
-            ViewResult viewResult = connectionController.Edit(1) as ViewResult;
-            ConnectionModel connection = viewResult.ViewData.Model as ConnectionModel;
-
-            // assert
-            Assert.IsNotNull(connection);
-            Assert.IsTrue(connection.ConnectionId == 1);
-        }
-
-        [TestMethod]
-        public void Edit_Get_Should_Display_Error_When_Invalid_Id()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-
-            // act
-            ViewResult viewResult = connectionController.Edit(1) as ViewResult;
-
-            // assert
-            Assert.IsNotNull(viewResult);
-            Assert.IsTrue(viewResult.ViewName == "NotFound");
-        }
-
-        [TestMethod]
-        public void Edit_Post_Should_Update_Connection_When_Valid()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 1, Name = "connection1" });
-
-            FormCollection formCollection = new FormCollection();
-            formCollection["Name"] = "connectionA";
-            formCollection["ConnectionParameterKey1"] = "key1";
-            formCollection["ConnectionParameterValue1"] = "value1";
-
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-            connectionController.ValueProvider = formCollection.ToValueProvider();
-
-            // act
-            ViewResult viewResult = connectionController.Edit(1, formCollection) as ViewResult;
-            ConnectionModel connection = connectionRepository.GetConnection(1);
-
-            // assert
-            Assert.IsTrue(connection.Name == "connectionA");
-        }
-
-        /*
-         * interesting problem... the in-memory object was updated, so not possible to get previous state
-        [TestMethod]
-        public void Edit_Post_Should_Not_Update_Connection_When_Invalid()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 1, Name = "connection1" });
-
-            FormCollection formCollection = new FormCollection();
-            formCollection["Name"] = String.Empty;
-
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-            connectionController.ValueProvider = formCollection.ToValueProvider();
-
-            // act
-            ViewResult viewResult = connectionController.Edit(1, formCollection) as ViewResult;
-            ConnectionModel connection = connectionRepository.GetConnection(1);
-
-            // assert
-            Assert.IsTrue(connection.Name == "connection1");
-        }
-         * */
-
-        [TestMethod]
-        public void Edit_Post_Should_Redisplay_With_Errors_When_Invalid()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 1, Name = "connection1" });
-
-            FormCollection formCollection = new FormCollection();
-            formCollection["Name"] = String.Empty;
-
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-            connectionController.ValueProvider = formCollection.ToValueProvider();
-
-            // act
-            ViewResult viewResult = connectionController.Edit(1, formCollection) as ViewResult;
-
-            // assert
-            Assert.IsTrue(viewResult.ViewData.Model is ConnectionModel);
-            Assert.IsTrue(viewResult.ViewData.ModelState["Name"].Errors.Count > 0);
-        }
-
-        [TestMethod]
-        public void Edit_Post_Should_Redisplay_With_Errors_When_Duplicate_Name()
-        {
-            // arrange
-            FakeConnectionRepository connectionRepository = new FakeConnectionRepository();
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 1, Name = "connection1" });
-            connectionRepository.AddConnection(new ConnectionModel() { ConnectionId = 2, Name = "connection2" });
-
-            FormCollection formCollection = new FormCollection();
-            formCollection["Name"] = "connection2";
-            formCollection["ConnectionParameterKey1"] = "key1";
-            formCollection["ConnectionParameterValue1"] = "value1";
-
-            ConnectionController connectionController = new ConnectionController(connectionRepository);
-            connectionController.ValueProvider = formCollection.ToValueProvider();
-
-            // act
-            ViewResult viewResult = connectionController.Edit(1, formCollection) as ViewResult;
-
-            // assert
-            Assert.IsTrue(viewResult.ViewData.ModelState["Name"].Errors.Count == 1);
-        }
-    
+        var viewResult = connectionController.Edit(1, collection) as ViewResult;
+        Assert.True(viewResult?.ViewData.ModelState["Name"]?.Errors.Count == 1);
     }
 }

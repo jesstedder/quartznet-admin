@@ -1,0 +1,89 @@
+@model QuartzAdmin.web.Models.JobViewModel
+@{
+    ViewData["Title"] = "Job Details";
+    var instanceName = ViewData["instanceName"]?.ToString();
+}
+
+<h2>Job Details</h2>
+
+<fieldset>
+    <legend>Fields</legend>
+    <p><strong>Name:</strong> @Model?.JobDetail?.Key.Name</p>
+    <p><strong>Group:</strong> @Model?.JobDetail?.Key.Group</p>
+    <p><strong>Description:</strong> @Model?.JobDetail?.Description</p>
+    <p><strong>Requests Recovery:</strong> @Model?.JobDetail?.RequestsRecovery</p>
+    <p><strong>Durable:</strong> @Model?.JobDetail?.Durable</p>
+    <p><strong>Persist Data After Execution:</strong> @Model?.JobDetail?.PersistJobDataAfterExecution</p>
+    <p>
+        <strong>Job Data Map:</strong>
+        <ul>
+            @foreach (var d in Model?.JobDetail?.JobDataMap ?? new Quartz.JobDataMap())
+            {
+                <li>@d.Key - @d.Value</li>
+            }
+        </ul>
+    </p>
+</fieldset>
+
+<fieldset>
+    <legend>Triggers</legend>
+    <ul>
+        @foreach (var trigger in Model?.Triggers ?? [])
+        {
+            <li>
+                <a asp-controller="Trigger" asp-action="Details"
+                   asp-route-instanceName="@instanceName"
+                   asp-route-groupName="@trigger.Key.Group"
+                   asp-route-itemName="@trigger.Key.Name">
+                    @trigger.Key.Group.@trigger.Key.Name
+                </a>
+            </li>
+        }
+    </ul>
+</fieldset>
+
+<p>
+    <a asp-controller="Instance" asp-action="Connect" asp-route-id="@instanceName">Back to Instance</a>
+</p>
+
+@if (Model?.JobDetail != null)
+{
+    <div id="status_msg"></div>
+    <p><a href="#" id="showRunJobNow">Run Job Now</a></p>
+
+    <div id="runJobDialog" style="display:none; border:1px solid #ccc; padding:1em; margin-top:1em; background:#f9f9f9;">
+        <h4>Job Data Map</h4>
+        <form id="runnow_form"
+              action="@Url.Action("RunNow", "JobExecution", new { instanceName = instanceName, groupName = Model.JobDetail.Key.Group, itemName = Model.JobDetail.Key.Name })"
+              method="post">
+            @Html.AntiForgeryToken()
+            @foreach (var d in Model.JobDetail.JobDataMap)
+            {
+                <label for="jdm_@d.Key">@d.Key</label>
+                <input type="text" id="jdm_@d.Key" name="jdm_@d.Key" value="@d.Value" /><br />
+            }
+            <button type="submit">Run Now</button>
+            <button type="button" id="cancelRunJob">Cancel</button>
+        </form>
+    </div>
+
+    <script type="text/javascript">
+        document.getElementById("showRunJobNow").addEventListener("click", function (e) {
+            e.preventDefault();
+            document.getElementById("runJobDialog").style.display = "block";
+        });
+        document.getElementById("cancelRunJob").addEventListener("click", function () {
+            document.getElementById("runJobDialog").style.display = "none";
+        });
+        document.getElementById("runnow_form").addEventListener("submit", function (e) {
+            e.preventDefault();
+            var form = this;
+            fetch(form.action, { method: "POST", body: new FormData(form) })
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    document.getElementById("status_msg").textContent = text;
+                    document.getElementById("runJobDialog").style.display = "none";
+                });
+        });
+    </script>
+}

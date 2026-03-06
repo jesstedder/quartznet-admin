@@ -1,0 +1,49 @@
+@model QuartzAdmin.web.Models.ConnectionModel
+@{
+    ViewData["Title"] = "Create Connection";
+}
+
+<h2>Create Connection</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="validation-summary-errors">
+        <p>Create was unsuccessful. Please correct the errors and try again.</p>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <fieldset>
+        <p>
+            <label for="Name">Name:</label>
+            <input type="text" id="Name" name="Name" value="@Model?.Name" />
+        </p>
+        <p>
+            <label>Parameters:</label>
+            <table>
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td><input type="text" name="ConnectionParameterKey1" /></td>
+                    <td><input type="text" name="ConnectionParameterValue1" /></td>
+                </tr>
+            </table>
+        </p>
+        <p>
+            <input type="submit" value="Create" />
+        </p>
+    </fieldset>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

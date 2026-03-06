@@ -1,25 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using Quartz;
-using Quartz.Impl;
-using Quartz.Impl.Calendar;
 
-namespace QuartzAdmin.web.Models
+namespace QuartzAdmin.web.Models;
+
+public class CalendarRepository
 {
-    public class CalendarRepository 
+    private readonly InstanceModel _quartzInstance;
+
+    public CalendarRepository(InstanceModel instance)
     {
-        private InstanceModel quartzInstance;
-        public CalendarRepository(Models.InstanceModel instance)
-        {
-            quartzInstance = instance;
-        }
-        public ICalendar GetCalendar(string calendarName)
-        {
-            IScheduler sched = quartzInstance.GetQuartzScheduler();
-            return sched.GetCalendar(calendarName);
-            
-        }
+        _quartzInstance = instance;
+    }
+
+    public async Task<ICalendar?> GetCalendar(string calendarName)
+    {
+        var sched = await _quartzInstance.GetQuartzScheduler();
+        return await sched.GetCalendar(calendarName);
     }
 }

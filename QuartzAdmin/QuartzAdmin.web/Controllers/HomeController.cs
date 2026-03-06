@@ -1,29 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using QuartzAdmin.web.Models;
 
-namespace QuartzAdmin.web.Controllers
+namespace QuartzAdmin.web.Controllers;
+
+public class HomeController : Controller
 {
+    private readonly IInstanceRepository _repo;
 
-    [HandleError]
-    public class HomeController : Controller
+    public HomeController(IInstanceRepository repo)
     {
-
-        //Models.GroupRepository groupRepo = new QuartzAdmin.web.Models.GroupRepository();
-        Models.InstanceRepository repo = new QuartzAdmin.web.Models.InstanceRepository();
-
-        public ActionResult Index()
-        {
-            var instances = repo.GetAll();
-            //var groups = groupRepo.FindAllGroups().ToList();
-            return View(instances);
-        }
-
-        public ActionResult About()
-        {
-            return View();
-        }
+        _repo = repo;
     }
+
+    public IActionResult Index()
+    {
+        var instances = _repo.GetAll();
+        return View(instances);
+    }
+
+    public IActionResult About() => View();
 }

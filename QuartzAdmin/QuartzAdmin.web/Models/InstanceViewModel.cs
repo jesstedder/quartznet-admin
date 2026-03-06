@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using Quartz;
 
-namespace QuartzAdmin.web.Models
+namespace QuartzAdmin.web.Models;
+
+public class InstanceViewModel
 {
-    public class InstanceViewModel
-    {
-        public InstanceModel Instance { get; set; }
-        public List<Quartz.JobDetail> Jobs { get; set; }
-        public List<Quartz.Trigger> Triggers { get; set; }
-    }
+    public InstanceModel? Instance { get; set; }
+    public List<IJobDetail> Jobs { get; set; } = new();
+    public List<ITrigger> Triggers { get; set; } = new();
 }

@@ -1,0 +1,82 @@
+@model QuartzAdmin.web.Models.InstanceModel
+@{
+    ViewData["Title"] = "Instance Properties";
+    var props = Model?.InstanceProperties?.ToList() ?? new List<QuartzAdmin.web.Models.InstancePropertyModel>();
+}
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+        var addButton = document.getElementById("addRowsButton");
+        if (addButton) {
+            addButton.addEventListener("click", function (e) {
+                e.preventDefault();
+                var table = document.getElementById("instancePropsTable");
+                var rows = table.querySelectorAll("tbody tr");
+                var nextIndex = rows.length + 1;
+                var newRow = table.querySelector("tbody").insertRow();
+                newRow.innerHTML =
+                    '<td><input type="text" id="InstancePropertyKey-' + nextIndex + '" name="InstancePropertyKey-' + nextIndex + '"/></td>' +
+                    '<td><input type="text" id="InstancePropertyValue-' + nextIndex + '" name="InstancePropertyValue-' + nextIndex + '" />' +
+                    ' <a href="#" class="delRowBtn">x</a></td>';
+                attachDeleteHandlers();
+            });
+        }
+        attachDeleteHandlers();
+    });
+
+    function attachDeleteHandlers() {
+        document.querySelectorAll(".delRowBtn").forEach(function (btn) {
+            btn.onclick = function (e) {
+                e.preventDefault();
+                btn.closest("tr").remove();
+            };
+        });
+    }
+</script>
+
+<label>Quartz Properties <a href="#" id="addRowsButton" title="Add row">+</a></label>
+
+<table id="instancePropsTable">
+    <thead>
+        <tr>
+            <th>Prop Name</th>
+            <th>Prop Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (props.Count == 0)
+        {
+            <tr>
+                <td><input type="text" id="InstancePropertyKey-1" name="InstancePropertyKey-1" value="quartz.scheduler.instanceName" /></td>
+                <td><input type="text" id="InstancePropertyValue-1" name="InstancePropertyValue-1" value="SampleQuartzScheduler" /></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="InstancePropertyKey-2" name="InstancePropertyKey-2" value="quartz.threadPool.type" /></td>
+                <td><input type="text" id="InstancePropertyValue-2" name="InstancePropertyValue-2" value="Quartz.Simpl.SimpleThreadPool, Quartz" /></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="InstancePropertyKey-3" name="InstancePropertyKey-3" value="quartz.scheduler.proxy" /></td>
+                <td><input type="text" id="InstancePropertyValue-3" name="InstancePropertyValue-3" value="true" /></td>
+            </tr>
+            <tr>
+                <td><input type="text" id="InstancePropertyKey-4" name="InstancePropertyKey-4" value="quartz.scheduler.proxy.address" /></td>
+                <td><input type="text" id="InstancePropertyValue-4" name="InstancePropertyValue-4" value="tcp://localhost:555/QuartzScheduler" /></td>
+            </tr>
+        }
+        else
+        {
+            int cnt = 1;
+            foreach (var prop in props)
+            {
+                <tr>
+                    <td><input type="text" id="InstancePropertyKey-@cnt" name="InstancePropertyKey-@cnt" value="@prop.PropertyName" /></td>
+                    <td>
+                        <input type="text" id="InstancePropertyValue-@cnt" name="InstancePropertyValue-@cnt" value="@prop.PropertyValue" />
+                        <a href="#" class="delRowBtn">x</a>
+                    </td>
+                </tr>
+                cnt++;
+            }
+        }
+    </tbody>
+</table>

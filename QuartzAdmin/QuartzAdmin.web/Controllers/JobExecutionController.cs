@@ -1,90 +1,57 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Mvc.Ajax;
+using Microsoft.AspNetCore.Mvc;
+using QuartzAdmin.web.Models;
 
-namespace QuartzAdmin.web.Controllers
+namespace QuartzAdmin.web.Controllers;
+
+public class JobExecutionController : Controller
 {
-    public class JobExecutionController : Controller
+    public IInstanceRepository Repository { get; set; }
+
+    public JobExecutionController(IInstanceRepository repository)
     {
-        //private Models.JobRepository jobRepo = new QuartzAdmin.web.Models.JobRepository();
-        //private Models.TriggerRepository trigRepo = new QuartzAdmin.web.Models.TriggerRepository();
-        public Models.IInstanceRepository Repository { get; set; }
+        Repository = repository;
+    }
 
-        public JobExecutionController()
+    public IActionResult Index() => View();
+
+    [HttpPost]
+    public async Task<IActionResult> RunNow(string instanceName, string groupName, string itemName)
+    {
+        var instance = Repository.GetByName(instanceName);
+        if (instance == null) return Content("Instance not found");
+
+        var jobRepo = new JobRepository(instance);
+        var job = await jobRepo.GetJob(itemName, groupName);
+        if (job == null) return Content("Job not found");
+
+        var jdm = job.JobDataMap;
+        foreach (string jdmKey in Request.Form.Keys)
         {
-            Repository = new QuartzAdmin.web.Models.InstanceRepository();
-        }
-        public JobExecutionController(Models.IInstanceRepository repository)
-        {
-            Repository = repository;
-        }
-
-
-        //
-        // GET: /JobExecution/
-
-        public ActionResult Index()
-        {
-            return View();
-        }
-
-        /*
-        [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult RunNow(string groupName, string itemName)
-        {
-            //jobRepo.RunJobNow(itemName, groupName);
-            return Content("Job execution started");
-        }
-        
-        [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult RunNow(string groupName, string itemName, DateTime lastRunDate)
-        {
-            //jobRepo.RunJobNow(itemName, groupName);
-            return Content("Job execution started");
-        }
-         * */
-
-        [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult RunNow(string instanceName, string groupName, string itemName)
-        {
-            Models.InstanceModel instance = Repository.GetByName(instanceName);
-            Models.JobRepository jobRepo = new QuartzAdmin.web.Models.JobRepository(instance);
-
-            //var jdm_keys = this.ValueProvider.Keys.Where(k=>k.StartsWith("jdm_"));
-            Quartz.JobDetail job = jobRepo.GetJob(itemName, groupName);
-
-
-            foreach (string jdm_key in this.Request.Form.Keys)
+            if (jdmKey.StartsWith("jdm_"))
             {
-                if (jdm_key.StartsWith("jdm_"))
+                var dataKey = jdmKey[4..];
+                if (jdm.ContainsKey(dataKey))
                 {
-                    if (job.JobDataMap.Contains(jdm_key.Substring(4)))
-                    {
-                        job.JobDataMap[jdm_key.Substring(4)] = Convert.ChangeType(Request.Form[jdm_key], job.JobDataMap[jdm_key.Substring(4)].GetType());
-                    }
+                    jdm[dataKey] = Convert.ChangeType(Request.Form[jdmKey].ToString(), jdm[dataKey]!.GetType());
                 }
             }
-            jobRepo.RunJobNow(itemName, groupName, job.JobDataMap);
-
-            return Content("Job execution started");
         }
+        await jobRepo.RunJobNow(itemName, groupName, jdm);
+        return Content("Job execution started");
+    }
 
-        public ActionResult CurrentStatus(string id)
-        {
-            this.ViewData["groupName"] = id;
-            return View();
-        }
+    public IActionResult CurrentStatus(string id)
+    {
+        ViewData["groupName"] = id;
+        return View();
+    }
 
-        public JsonResult GetCurrentTriggerStatusList(string id)
-        {
-            Models.InstanceModel instance = Repository.GetByName(id);
-            Models.TriggerRepository trigRepo = new QuartzAdmin.web.Models.TriggerRepository(instance);
-            IList<Models.TriggerStatusModel> triggerStatuses = trigRepo.GetAllTriggerStatus();
-            return this.Json(triggerStatuses, JsonRequestBehavior.AllowGet);
-        }
-
+    public async Task<JsonResult> GetCurrentTriggerStatusList(string id)
+    {
+        var instance = Repository.GetByName(id);
+        if (instance == null) return Json(new List<TriggerStatusModel>());
+        var trigRepo = new TriggerRepository(instance);
+        var triggerStatuses = await trigRepo.GetAllTriggerStatus();
+        return Json(triggerStatuses);
     }
 }

@@ -1,26 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using Castle.ActiveRecord;
-using Iesi.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace QuartzAdmin.web.Models
+namespace QuartzAdmin.web.Models;
+
+public class InstancePropertyModel
 {
-    [ActiveRecord(Table="tbl_instanceproperties")]
-    public class InstancePropertyModel : ActiveRecordBase<InstancePropertyModel>
-    {
-        [PrimaryKey(Generator=PrimaryKeyType.Identity)]
-        public virtual int InstancePropertyID { get; set; }
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int InstancePropertyID { get; set; }
 
-        [BelongsTo("InstanceID", NotNull=true)]
-        public virtual InstanceModel ParentInstance { get; set; }
-        //public virtual int InstanceID{ get; set; }
+    public InstanceModel ParentInstance { get; set; } = null!;
 
-        [Property(NotNull=true)]
-        public virtual string PropertyName { get; set; }
+    [Required]
+    public string PropertyName { get; set; } = string.Empty;
 
-        [Property(NotNull = true)]
-        public virtual string PropertyValue { get; set; }
-    }
+    [Required]
+    public string PropertyValue { get; set; } = string.Empty;
 }

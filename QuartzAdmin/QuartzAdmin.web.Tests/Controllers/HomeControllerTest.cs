@@ -1,42 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Web.Mvc;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using QuartzAdmin.web;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using Xunit;
 using QuartzAdmin.web.Controllers;
+using QuartzAdmin.web.Models;
 
-namespace QuartzAdmin.web.Tests.Controllers
+namespace QuartzAdmin.web.Tests.Controllers;
+
+public class HomeControllerTest
 {
-    [TestClass]
-    public class HomeControllerTest
+    [Fact]
+    public void Index_Returns_View_With_Instances()
     {
-        [TestMethod]
-        public void Index()
+        var mockRepo = new Mock<IInstanceRepository>();
+        mockRepo.Setup(r => r.GetAll()).Returns(new List<InstanceModel>
         {
-            // Arrange
-            HomeController controller = new HomeController();
+            new InstanceModel { InstanceName = "Instance1" }
+        });
 
-            // Act
-            ViewResult result = controller.Index() as ViewResult;
+        var controller = new HomeController(mockRepo.Object);
+        var result = controller.Index() as ViewResult;
 
-            // Assert
-            ViewDataDictionary viewData = result.ViewData;
-            Assert.AreEqual("Welcome to ASP.NET MVC!", viewData["Message"]);
-        }
+        Assert.NotNull(result);
+        var model = result.Model as List<InstanceModel>;
+        Assert.NotNull(model);
+        Assert.Single(model);
+    }
 
-        [TestMethod]
-        public void About()
-        {
-            // Arrange
-            HomeController controller = new HomeController();
-
-            // Act
-            ViewResult result = controller.About() as ViewResult;
-
-            // Assert
-            Assert.IsNotNull(result);
-        }
+    [Fact]
+    public void About_Returns_View()
+    {
+        var mockRepo = new Mock<IInstanceRepository>();
+        var controller = new HomeController(mockRepo.Object);
+        var result = controller.About() as ViewResult;
+        Assert.NotNull(result);
     }
 }

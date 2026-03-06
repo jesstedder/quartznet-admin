@@ -1,59 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
 
-namespace QuartzAdmin.web.Models
+namespace QuartzAdmin.web.Models;
+
+public class ConnectionParameterModel : IValidatingModel
 {
-    public class ConnectionParameterModel : IValidatingModel
+    public string? Key { get; set; }
+    public string? Value { get; set; }
+
+    public bool IsValid => !GetRuleViolations().Any();
+
+    public IEnumerable<RuleViolation> GetRuleViolations()
     {
-        public string Key { get; set; }
-        public string Value { get; set; }
+        if (string.IsNullOrEmpty(Key))
+            yield return new RuleViolation("Parameter key required", "Key");
 
-        public bool IsValid
+        if (string.IsNullOrEmpty(Value))
+            yield return new RuleViolation("Parameter value required", "Value");
+    }
+
+    public static List<ConnectionParameterModel> FromFormCollection(IFormCollection formCollection)
+    {
+        var connectionParameterList = new List<ConnectionParameterModel>();
+        const string keyPrefix = "ConnectionParameterKey";
+        const string valuePrefix = "ConnectionParameterValue";
+
+        foreach (string key in formCollection.Keys)
         {
-            get { return this.GetRuleViolations().Count() == 0; }
-        }
-
-        public IEnumerable<RuleViolation> GetRuleViolations()
-        {
-            if (String.IsNullOrEmpty(this.Key))
+            if (key.StartsWith(keyPrefix))
             {
-                yield return new RuleViolation("Parameter key required", "Key");
-            }
-
-            if (String.IsNullOrEmpty(this.Value))
-            {
-                yield return new RuleViolation("Parameter value required", "Value");
+                var parameterIndex = key.Remove(0, keyPrefix.Length);
+                var parameterKey = formCollection[key].ToString();
+                var parameterValue = formCollection[valuePrefix + parameterIndex].ToString();
+                connectionParameterList.Add(new ConnectionParameterModel { Key = parameterKey, Value = parameterValue });
             }
         }
-
-        public static List<ConnectionParameterModel> FromFormCollection(FormCollection formCollection)
-        {
-            List<ConnectionParameterModel> connectionParameterList = new List<ConnectionParameterModel>();
-            string keyPrefix = "ConnectionParameterKey";
-            string valuePrefix = "ConnectionParameterValue";
-
-            string parameterIndex = null;
-            string parameterKey = null;
-            string parameterValue = null;
-
-            //formCollection["ConnectionParameterKey1"] = "key1";
-            //formCollection["ConnectionParameterValue1"] = "value1";
-
-            foreach (string key in formCollection.AllKeys)
-            {
-                if (key.StartsWith(keyPrefix))
-                {
-                    parameterIndex = key.Remove(0, keyPrefix.Length);
-                    parameterKey = formCollection[key];
-                    parameterValue = formCollection[valuePrefix + parameterIndex];
-                    connectionParameterList.Add(new ConnectionParameterModel() { Key = parameterKey, Value = parameterValue });
-                }
-            }
-
-            return connectionParameterList;
-        }
+        return connectionParameterList;
     }
 }

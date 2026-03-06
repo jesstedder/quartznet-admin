@@ -1,0 +1,22 @@
+@model IEnumerable<QuartzAdmin.web.Models.InstanceModel>
+@{
+    ViewData["Title"] = "Home";
+}
+
+<h2>Welcome to Quartz Admin</h2>
+
+<table>
+    @foreach (var instance in Model)
+    {
+        <tr>
+            <td>@instance.InstanceName</td>
+            <td><a asp-controller="Instance" asp-action="Connect" asp-route-id="@instance.InstanceName">Connect</a></td>
+            <td><a asp-controller="Instance" asp-action="Details" asp-route-id="@instance.InstanceName">View</a></td>
+            <td><a asp-controller="Instance" asp-action="Edit" asp-route-id="@instance.InstanceName">Edit</a></td>
+        </tr>
+    }
+</table>
+
+<p>
+    <a asp-controller="Instance" asp-action="Create">Create New</a>
+</p>

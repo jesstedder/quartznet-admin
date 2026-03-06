@@ -1,0 +1,28 @@
+@model QuartzAdmin.web.Models.TriggerFireTimesModel
+@{
+    if (Model?.Trigger == null) { return; }
+
+    DateTimeOffset? tempDate = DateTimeOffset.UtcNow;
+    var lastFireTime = Model.Trigger.GetPreviousFireTimeUtc();
+    if (!lastFireTime.HasValue) lastFireTime = DateTimeOffset.UtcNow;
+    tempDate = lastFireTime;
+}
+
+<ul>
+    @for (int i = 0; i < 30; i++)
+    {
+        tempDate = Model.Trigger.GetFireTimeAfter(tempDate);
+        if (!tempDate.HasValue) break;
+
+        DateTimeOffset? printDate = tempDate;
+        if (Model.Calendar != null && !Model.Calendar.IsTimeIncluded(tempDate.Value))
+        {
+            printDate = null;
+        }
+
+        if (printDate.HasValue)
+        {
+            <li>@printDate.Value.ToLocalTime().ToString("g")</li>
+        }
+    }
+</ul>
