@@ -8,8 +8,6 @@ public class ConnectionController : Controller
 {
     private readonly IConnectionRepository _connectionRepository;
 
-    public ConnectionController() : this(new ConnectionRepository()) { }
-
     public ConnectionController(IConnectionRepository repository)
     {
         _connectionRepository = repository;
