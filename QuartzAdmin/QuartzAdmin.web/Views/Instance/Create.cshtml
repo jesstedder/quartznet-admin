@@ -1,0 +1,39 @@
+@model QuartzAdmin.web.Models.InstanceModel
+@{
+    ViewData["Title"] = "Create Instance";
+}
+
+<h2>Create new connection instance</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="validation-summary-errors">
+        <p>Create was unsuccessful. Please correct the errors and try again.</p>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <fieldset>
+        <p>
+            <label for="InstanceName">Name:</label>
+            <input type="text" id="InstanceName" name="InstanceName" />
+        </p>
+        <p>
+            @await Html.PartialAsync("_InstanceProps", Model)
+        </p>
+        <p>
+            <input type="submit" value="Create" />
+        </p>
+    </fieldset>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

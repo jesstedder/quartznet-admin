@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "Log On";
+}
+
+<h2>Log On</h2>
+<p>
+    Please enter your username and password.
+    <a asp-action="Register">Register</a> if you don't have an account.
+</p>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="validation-summary-errors">
+        <p>Login was unsuccessful. Please correct the errors and try again.</p>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <div>
+        <fieldset>
+            <legend>Account Information</legend>
+            <p>
+                <label for="userName">Username:</label>
+                <input type="text" id="userName" name="userName" />
+            </p>
+            <p>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" />
+            </p>
+            <p>
+                <input type="checkbox" id="rememberMe" name="rememberMe" value="true" />
+                <label for="rememberMe">Remember me?</label>
+            </p>
+            <p>
+                <input type="submit" value="Log On" />
+            </p>
+        </fieldset>
+    </div>
+</form>

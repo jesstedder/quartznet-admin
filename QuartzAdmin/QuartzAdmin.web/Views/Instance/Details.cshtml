@@ -1,0 +1,30 @@
+@model QuartzAdmin.web.Models.InstanceModel
+@{
+    ViewData["Title"] = Model?.InstanceName + " Details";
+}
+
+<h2>@Model?.InstanceName Details</h2>
+
+<fieldset>
+    <p>
+        <strong>ID:</strong> @Model?.InstanceID
+    </p>
+    <p>
+        <strong>Name:</strong> @Model?.InstanceName
+    </p>
+    <p>
+        <strong>Properties:</strong>
+        <ul>
+            @foreach (var prop in Model?.InstanceProperties ?? [])
+            {
+                <li>@prop.PropertyName - @prop.PropertyValue</li>
+            }
+        </ul>
+    </p>
+</fieldset>
+
+<p>
+    <a asp-action="Edit" asp-route-id="@Model?.InstanceName">Edit</a> |
+    <a asp-action="Delete" asp-route-id="@Model?.InstanceName">Delete</a> |
+    <a asp-controller="Home" asp-action="Index">Back to List</a>
+</p>

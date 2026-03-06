@@ -1,0 +1,33 @@
+@model QuartzAdmin.web.Models.InstanceModel
+@{
+    ViewData["Title"] = "Edit " + Model?.InstanceName;
+}
+
+<h2>Edit @Model?.InstanceName</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="validation-summary-errors">
+        <p>Edit was unsuccessful. Please correct the errors and try again.</p>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <fieldset>
+        @await Html.PartialAsync("_InstanceProps", Model)
+        <p>
+            <input type="submit" value="Save" />
+        </p>
+    </fieldset>
+</form>
+
+<div>
+    <a asp-controller="Home" asp-action="Index">Back to List</a>
+</div>

@@ -1,0 +1,30 @@
+@model IEnumerable<QuartzAdmin.web.Models.ConnectionModel>
+@{
+    ViewData["Title"] = "Connections";
+}
+
+<h2>Connections</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.ConnectionId">Edit</a>
+                </td>
+                <td>@item.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>

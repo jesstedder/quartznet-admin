@@ -1,0 +1,20 @@
+@model Quartz.ICalendar
+@{
+    ViewData["Title"] = "Calendar Details";
+    DateTimeOffset dtTemp = DateTimeOffset.UtcNow;
+}
+
+<h2>Calendar: @ViewData["calendarName"]</h2>
+
+<fieldset>
+    <legend>Next 30 valid times</legend>
+    @for (int i = 0; i < 30; i++)
+    {
+        dtTemp = Model.GetNextIncludedTimeUtc(dtTemp);
+        <p>@dtTemp.ToLocalTime().ToString("g")</p>
+    }
+</fieldset>
+
+<p>
+    <a asp-controller="Home" asp-action="Index">Back to Home</a>
+</p>

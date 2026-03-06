@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Quartz Administration</title>
+    <link rel="stylesheet" href="~/Content/Site.css" />
+</head>
+<body>
+    <div class="page">
+        <div id="header">
+            <div id="title">
+                <img src="~/Content/Images/logo.png" alt="Quartz Admin" />
+                <h1>Quartz Administration</h1>
+            </div>
+            <div id="menucontainer">
+                <ul id="menu">
+                    <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="main">
+            @RenderBody()
+
+            <div id="footer"></div>
+        </div>
+    </div>
+</body>
+</html>

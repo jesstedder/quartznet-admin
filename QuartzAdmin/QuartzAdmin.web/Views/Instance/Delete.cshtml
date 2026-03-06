@@ -1,0 +1,13 @@
+@model QuartzAdmin.web.Models.InstanceModel
+@{
+    ViewData["Title"] = "Delete Instance";
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <h2>Are you sure you want to delete [@Model?.InstanceName]?</h2>
+    <p>
+        <input type="submit" value="Delete" />
+        <a asp-action="Index">Back to List</a>
+    </p>
+</form>

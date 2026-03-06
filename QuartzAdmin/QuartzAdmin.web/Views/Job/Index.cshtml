@@ -1,0 +1,42 @@
+@model IEnumerable<Quartz.IJobDetail>
+@{
+    ViewData["Title"] = "Jobs";
+    var instanceName = ViewData["instanceName"]?.ToString();
+}
+
+<h3>Current Status</h3>
+@{ ViewData["instanceName"] = instanceName; }
+@await Html.PartialAsync("~/Views/Instance/_CurrentStatus.cshtml")
+
+<h2>Jobs</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th></th>
+            <th>Name</th>
+            <th>Group</th>
+            <th>Description</th>
+            <th>Requests Recovery</th>
+            <th>Durable</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    <a asp-controller="Job" asp-action="Details"
+                       asp-route-instanceName="@instanceName"
+                       asp-route-groupName="@item.Key.Group"
+                       asp-route-itemName="@item.Key.Name">Details</a>
+                </td>
+                <td>@item.Key.Name</td>
+                <td>@item.Key.Group</td>
+                <td>@item.Description</td>
+                <td>@item.RequestsRecovery</td>
+                <td>@item.Durable</td>
+            </tr>
+        }
+    </tbody>
+</table>

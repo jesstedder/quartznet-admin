@@ -1,0 +1,61 @@
+@model QuartzAdmin.web.Models.ConnectionModel
+@{
+    ViewData["Title"] = "Edit Connection";
+}
+
+<h2>Edit Connection</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="validation-summary-errors">
+        <p>Edit was unsuccessful. Please correct the errors and try again.</p>
+        <ul>
+            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <li>@error.ErrorMessage</li>
+            }
+        </ul>
+    </div>
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <fieldset>
+        <p>
+            <label for="Name">Name:</label>
+            <input type="text" id="Name" name="Name" value="@Model?.Name" />
+        </p>
+        <p>
+            <label>Parameters:</label>
+            <table>
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+                @{ int cnt = 1; }
+                @foreach (var param in Model?.ConnectionParameters ?? [])
+                {
+                    <tr>
+                        <td><input type="text" name="ConnectionParameterKey@cnt" value="@param.Key" /></td>
+                        <td><input type="text" name="ConnectionParameterValue@cnt" value="@param.Value" /></td>
+                    </tr>
+                    cnt++;
+                }
+                @if (!(Model?.ConnectionParameters?.Any() ?? false))
+                {
+                    <tr>
+                        <td><input type="text" name="ConnectionParameterKey1" /></td>
+                        <td><input type="text" name="ConnectionParameterValue1" /></td>
+                    </tr>
+                }
+            </table>
+        </p>
+        <p>
+            <input type="submit" value="Save" />
+        </p>
+    </fieldset>
+</form>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

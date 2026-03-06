@@ -1,0 +1,59 @@
+@model QuartzAdmin.web.Models.TriggerFireTimesModel
+@{
+    ViewData["Title"] = "Trigger Details";
+    var instanceName = Model?.Instance?.InstanceName;
+}
+
+<h2>Trigger Details</h2>
+
+<fieldset>
+    <legend>Fields</legend>
+    <p><strong>Name:</strong> @Model?.Trigger?.Key.Name</p>
+    <p><strong>Group:</strong> @Model?.Trigger?.Key.Group</p>
+    <p><strong>Job Name:</strong> @Model?.Trigger?.JobKey.Name</p>
+    <p><strong>Job Group:</strong> @Model?.Trigger?.JobKey.Group</p>
+    <p><strong>Description:</strong> @Model?.Trigger?.Description</p>
+    <p>
+        <strong>Calendar:</strong>
+        @if (!string.IsNullOrEmpty(Model?.Trigger?.CalendarName))
+        {
+            <a asp-controller="Calendar" asp-action="Details"
+               asp-route-instanceName="@instanceName"
+               asp-route-itemName="@Model!.Trigger!.CalendarName">@Model.Trigger.CalendarName</a>
+        }
+        else
+        {
+            <span>None</span>
+        }
+    </p>
+    <p><strong>Priority:</strong> @Model?.Trigger?.Priority</p>
+    <p><strong>Misfire Instruction:</strong> @Model?.Trigger?.MisfireInstruction</p>
+    <p><strong>Start Time (UTC):</strong> @String.Format("{0:g}", Model?.Trigger?.StartTimeUtc)</p>
+    <p><strong>End Time (UTC):</strong> @String.Format("{0:g}", Model?.Trigger?.EndTimeUtc)</p>
+    <p><strong>Final Fire Time (UTC):</strong> @String.Format("{0:g}", Model?.Trigger?.FinalFireTimeUtc)</p>
+    @if (Model?.Trigger is Quartz.ICronTrigger cronTrig)
+    {
+        <p>
+            <strong>CRON Expression:</strong> @cronTrig.CronExpressionString<br />
+            <strong>CRON Summary:</strong> @cronTrig.GetExpressionSummary()
+        </p>
+    }
+</fieldset>
+
+<p>
+    <a asp-controller="Instance" asp-action="Connect" asp-route-id="@instanceName">Back to Instance</a>
+    | <a href="#" id="showFireTimes">Show Fire Times</a>
+</p>
+
+<div id="fireTimesPanel" style="display:none; border:1px solid #ccc; padding:1em; margin-top:1em; background:#f9f9f9;">
+    <h4>Upcoming Fire Times</h4>
+    @await Html.PartialAsync("_FireTimesPartial", Model)
+</div>
+
+<script type="text/javascript">
+    document.getElementById("showFireTimes").addEventListener("click", function (e) {
+        e.preventDefault();
+        var panel = document.getElementById("fireTimesPanel");
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+    });
+</script>
