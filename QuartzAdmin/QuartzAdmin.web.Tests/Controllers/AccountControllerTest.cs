@@ -11,7 +11,7 @@ public class AccountControllerTest
     [Fact]
     public void LogOn_Get_Returns_View()
     {
-        var controller = new AccountController(null, null);
+        var controller = new AccountController(new FormsAuthenticationService(), new AccountMembershipService());
         var result = controller.LogOn() as ViewResult;
         Assert.NotNull(result);
     }
@@ -22,7 +22,7 @@ public class AccountControllerTest
         var mockMembership = new Mock<IMembershipService>();
         mockMembership.Setup(m => m.MinPasswordLength).Returns(8);
 
-        var controller = new AccountController(null, mockMembership.Object);
+        var controller = new AccountController(new FormsAuthenticationService(), mockMembership.Object);
         var result = controller.Register() as ViewResult;
 
         Assert.NotNull(result);
@@ -32,7 +32,7 @@ public class AccountControllerTest
     [Fact]
     public void ChangePasswordSuccess_Returns_View()
     {
-        var controller = new AccountController(null, null);
+        var controller = new AccountController(new FormsAuthenticationService(), new AccountMembershipService());
         var result = controller.ChangePasswordSuccess() as ViewResult;
         Assert.NotNull(result);
     }

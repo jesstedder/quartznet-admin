@@ -1,15 +1,19 @@
 using Microsoft.EntityFrameworkCore;
+using QuartzAdmin.web.Controllers;
 using QuartzAdmin.web.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddRazorRuntimeCompilation();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
     {
         options.LoginPath = "/Account/LogOn";
     });
+builder.Services.AddScoped<IFormsAuthentication, FormsAuthenticationService>();
+builder.Services.AddScoped<IMembershipService, AccountMembershipService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=quartz_admin.db"));
 builder.Services.AddScoped<IInstanceRepository, InstanceRepository>();

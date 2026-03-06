@@ -8,12 +8,10 @@ namespace QuartzAdmin.web.Controllers;
 [Route("[controller]/[action]")]
 public class AccountController : Controller
 {
-    public AccountController() : this(null, null) { }
-
-    public AccountController(IFormsAuthentication? formsAuth, IMembershipService? service)
+    public AccountController(IFormsAuthentication formsAuth, IMembershipService service)
     {
-        FormsAuth = formsAuth ?? new FormsAuthenticationService();
-        MembershipService = service ?? new AccountMembershipService();
+        FormsAuth = formsAuth;
+        MembershipService = service;
     }
 
     public IFormsAuthentication FormsAuth { get; private set; }
