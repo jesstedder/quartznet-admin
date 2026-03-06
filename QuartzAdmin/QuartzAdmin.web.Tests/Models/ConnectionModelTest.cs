@@ -1,173 +1,68 @@
-﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using QuartzAdmin.web.Models;
 
-namespace QuartzAdmin.web.Tests.Models
+namespace QuartzAdmin.web.Tests.Models;
+
+public class ConnectionModelTest
 {
-    /// <summary>
-    /// Summary description for ConnectionModelTest
-    /// </summary>
-    [TestClass]
-    public class ConnectionModelTest
+    private static ConnectionModel CreateValidConnection()
     {
-        #region Scaffolding
+        var connection = new ConnectionModel();
+        connection.Name = "name";
+        connection.ConnectionParameters.Add(new ConnectionParameterModel { Key = "key", Value = "value" });
+        return connection;
+    }
 
-        public ConnectionModelTest()
-        {
-            //
-            // TODO: Add constructor logic here
-            //
-        }
+    [Fact]
+    public void Should_Instantiate()
+    {
+        var connection = new ConnectionModel();
+        Assert.NotNull(connection);
+    }
 
-        private TestContext testContextInstance;
+    [Fact]
+    public void Should_Not_Be_Valid_When_Unitialized()
+    {
+        var connection = new ConnectionModel();
+        Assert.False(connection.IsValid);
+    }
 
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
+    [Fact]
+    public void Should_Be_Valid_When_Initialized()
+    {
+        var connection = CreateValidConnection();
+        Assert.True(connection.IsValid);
+    }
 
-        #region Additional test attributes
-        //
-        // You can use the following additional attributes as you write your tests:
-        //
-        // Use ClassInitialize to run code before running the first test in the class
-        // [ClassInitialize()]
-        // public static void MyClassInitialize(TestContext testContext) { }
-        //
-        // Use ClassCleanup to run code after all tests in a class have run
-        // [ClassCleanup()]
-        // public static void MyClassCleanup() { }
-        //
-        // Use TestInitialize to run code before running each test 
-        // [TestInitialize()]
-        // public void MyTestInitialize() { }
-        //
-        // Use TestCleanup to run code after each test has run
-        // [TestCleanup()]
-        // public void MyTestCleanup() { }
-        //
-        #endregion
+    [Fact]
+    public void Should_Not_Be_Valid_When_Name_Null()
+    {
+        var connection = CreateValidConnection();
+        connection.Name = null;
+        Assert.False(connection.IsValid);
+    }
 
-        #endregion
+    [Fact]
+    public void Should_Not_Be_Valid_When_Name_Empty()
+    {
+        var connection = CreateValidConnection();
+        connection.Name = string.Empty;
+        Assert.False(connection.IsValid);
+    }
 
+    [Fact]
+    public void Should_Not_Be_Valid_When_Zero_Parameters()
+    {
+        var connection = CreateValidConnection();
+        connection.ConnectionParameters.Clear();
+        Assert.False(connection.IsValid);
+    }
 
-        private ConnectionModel CreateValidConnection()
-        {
-            ConnectionModel connection = new ConnectionModel();
-            connection.Name = "name";
-
-            connection.ConnectionParameters.Add(new ConnectionParameterModel() { Key = "key", Value = "value" });
-            return connection;
-        }
-
-        [TestMethod]
-        public void Should_Instantiate()
-        {
-            // arrange
-            ConnectionModel connection = null;
-
-            // act
-            connection = new ConnectionModel();
-
-            // assert
-            Assert.IsNotNull(connection);
-        }
-
-        [TestMethod]
-        public void Should_Not_Be_Valid_When_Unitialized()
-        {
-            // arrange
-            ConnectionModel connection = new ConnectionModel();
-
-            // act
-            bool isValid = connection.IsValid;
-
-            // assert
-            Assert.IsFalse(isValid);
-        }
-
-        [TestMethod]
-        public void Should_Be_Valid_When_Initialized()
-        {
-            // arrange
-            ConnectionModel connection = this.CreateValidConnection();
-
-            // act
-            bool isValid = connection.IsValid;
-
-            // assert
-            Assert.IsTrue(isValid);
-        }
-
-        [TestMethod]
-        public void Should_Not_Be_Valid_When_Name_Null()
-        {
-            // arrange
-            ConnectionModel connection = this.CreateValidConnection();
-            connection.Name = null;
-
-            // act
-            bool isValid = connection.IsValid;
-
-            // assert
-            Assert.IsFalse(isValid);
-        }
-
-        [TestMethod]
-        public void Should_Not_Be_Valid_When_Name_Empty()
-        {
-            // arrange
-            ConnectionModel connection = this.CreateValidConnection();
-            connection.Name = String.Empty;
-
-            // act
-            bool isValid = connection.IsValid;
-
-            // assert
-            Assert.IsFalse(isValid);
-        }
-
-        [TestMethod]
-        public void Should_Not_Be_Valid_When_Zero_Parameters()
-        {
-            // arrange
-            ConnectionModel connection = this.CreateValidConnection();
-            connection.ConnectionParameters.Clear();
-
-            // act
-            bool isValid = connection.IsValid;
-
-            // assert
-            Assert.IsFalse(isValid);
-        }
-
-        [TestMethod]
-        public void Should_Not_Be_Valid_When_Parameters_Not_Valid()
-        {
-            // arrange
-            ConnectionModel connection = this.CreateValidConnection();
-            connection.ConnectionParameters.Add(new ConnectionParameterModel(){ Key="key", Value=null });
-
-            // act
-            bool isValid = connection.IsValid;
-
-            // assert
-            Assert.IsFalse(isValid);
-        }
-
+    [Fact]
+    public void Should_Not_Be_Valid_When_Parameters_Not_Valid()
+    {
+        var connection = CreateValidConnection();
+        connection.ConnectionParameters.Add(new ConnectionParameterModel { Key = "key", Value = null });
+        Assert.False(connection.IsValid);
     }
 }

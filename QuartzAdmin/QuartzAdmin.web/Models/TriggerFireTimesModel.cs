@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+using Quartz;
 
-namespace QuartzAdmin.web.Models
+namespace QuartzAdmin.web.Models;
+
+public class TriggerFireTimesModel
 {
-    public class TriggerFireTimesModel
-    {
-        public Quartz.ICalendar Calendar { get; set; }
-        public Quartz.Trigger Trigger { get; set; }
-        public InstanceModel Instance { get; set; }
-    }
+    public ICalendar? Calendar { get; set; }
+    public ITrigger? Trigger { get; set; }
+    public InstanceModel? Instance { get; set; }
 }

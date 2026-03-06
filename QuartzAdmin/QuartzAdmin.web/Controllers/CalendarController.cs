@@ -1,41 +1,27 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Mvc.Ajax;
+using Microsoft.AspNetCore.Mvc;
+using QuartzAdmin.web.Models;
 
-namespace QuartzAdmin.web.Controllers
+namespace QuartzAdmin.web.Controllers;
+
+public class CalendarController : Controller
 {
-    public class CalendarController : Controller
+    private readonly IInstanceRepository _instanceRepo;
+
+    public CalendarController(IInstanceRepository instanceRepo)
     {
-        Models.InstanceRepository instanceRepo = new QuartzAdmin.web.Models.InstanceRepository();
+        _instanceRepo = instanceRepo;
+    }
 
-        //
-        // GET: /Calendar/
+    public IActionResult Index() => View();
 
-        public ActionResult Index()
-        {
-            return View();
-        }
+    public async Task<IActionResult> Details(string instanceName, string itemName)
+    {
+        var instance = _instanceRepo.GetInstance(instanceName);
+        if (instance == null) return View("NotFound");
 
-        public ActionResult Details(string instanceName, string itemName)
-        {
-            Models.InstanceModel instance = instanceRepo.GetInstance(instanceName);
-
-            Models.CalendarRepository calRepo = new QuartzAdmin.web.Models.CalendarRepository(instance);
-            Quartz.ICalendar cal = calRepo.GetCalendar(itemName);
-            ViewData["calendarName"] = itemName;
-
-            if (cal == null)
-            {
-                return View("NotFound");
-            }
-            else
-            {
-                return View(cal);
-            }
-        }
-
+        var calRepo = new CalendarRepository(instance);
+        var cal = await calRepo.GetCalendar(itemName);
+        ViewData["calendarName"] = itemName;
+        return cal == null ? View("NotFound") : View(cal);
     }
 }

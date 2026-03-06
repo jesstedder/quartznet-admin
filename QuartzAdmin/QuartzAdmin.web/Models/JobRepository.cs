@@ -1,54 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using Quartz;
-using Quartz.Impl;
-using Quartz.Impl.Calendar;
 
-namespace QuartzAdmin.web.Models
+namespace QuartzAdmin.web.Models;
+
+public class JobRepository
 {
-    public class JobRepository
+    private readonly InstanceModel _quartzInstance;
+
+    public JobRepository(InstanceModel instance)
     {
-                private InstanceModel quartzInstance;
-        public JobRepository(string instanceName)
-        {
-            InstanceRepository repo = new InstanceRepository();
-            quartzInstance = repo.GetInstance(instanceName);
-        }
+        _quartzInstance = instance;
+    }
 
-        public JobRepository(InstanceModel instance)
-        {
-            quartzInstance = instance;
-        }
+    public async Task<IJobDetail?> GetJob(string jobName, string groupName)
+    {
+        var sched = await _quartzInstance.GetQuartzScheduler();
+        return await sched.GetJobDetail(new JobKey(jobName, groupName));
+    }
 
+    public async Task RunJobNow(string jobName, string groupName)
+    {
+        var sched = await _quartzInstance.GetQuartzScheduler();
+        await sched.TriggerJob(new JobKey(jobName, groupName));
+    }
 
-        public JobDetail GetJob(string jobName, string groupName)
-        {
-            IScheduler sched = quartzInstance.GetQuartzScheduler();
-            JobDataMap jdm = new JobDataMap();
-            
-            return sched.GetJobDetail(jobName, groupName);
+    public async Task RunJobNow(string jobName, string groupName, JobDataMap jdm)
+    {
+        var sched = await _quartzInstance.GetQuartzScheduler();
+        await sched.TriggerJob(new JobKey(jobName, groupName), jdm);
+    }
 
-        }
-
-        public void RunJobNow(string jobName, string groupName)
-        {
-            IScheduler sched = quartzInstance.GetQuartzScheduler();
-            sched.TriggerJob(jobName, groupName);
-        }
-        public void RunJobNow(string jobName, string groupName, JobDataMap jdm)
-        {
-
-            IScheduler sched = quartzInstance.GetQuartzScheduler();
-            sched.TriggerJob(jobName, groupName, jdm);
-        }
-
-        public void DeleteJob(string jobName, string groupName)
-        {
-            IScheduler sched = quartzInstance.GetQuartzScheduler();
-            sched.DeleteJob(jobName, groupName);
-        }
-
+    public async Task DeleteJob(string jobName, string groupName)
+    {
+        var sched = await _quartzInstance.GetQuartzScheduler();
+        await sched.DeleteJob(new JobKey(jobName, groupName));
     }
 }

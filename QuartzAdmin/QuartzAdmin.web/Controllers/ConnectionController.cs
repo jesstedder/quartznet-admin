@@ -1,150 +1,100 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using System.Web.Mvc.Ajax;
+using Microsoft.AspNetCore.Mvc;
 using QuartzAdmin.web.Models;
 using QuartzAdmin.web.Helpers;
 
-namespace QuartzAdmin.web.Controllers
+namespace QuartzAdmin.web.Controllers;
+
+public class ConnectionController : Controller
 {
-    public class ConnectionController : Controller
+    private readonly IConnectionRepository _connectionRepository;
+
+    public ConnectionController() : this(new ConnectionRepository()) { }
+
+    public ConnectionController(IConnectionRepository repository)
     {
-        IConnectionRepository _connectionRepository = new ConnectionRepository();
-        public ConnectionController() { }
-        public ConnectionController(IConnectionRepository repository)
+        _connectionRepository = repository;
+    }
+
+    public IActionResult Index() => View(_connectionRepository.GetConnections());
+
+    public IActionResult Details(int id) => View();
+
+    public IActionResult Create() => View();
+
+    [HttpPost]
+    public IActionResult Create(IFormCollection collection)
+    {
+        ConnectionModel? connection = null;
+        try
         {
-            _connectionRepository = repository;
-        }
+            connection = new ConnectionModel();
+            connection.Name = collection["Name"];
+            connection.ConnectionParameters.Clear();
+            connection.ConnectionParameters.AddRange(ConnectionParameterModel.FromFormCollection(collection));
 
-        //
-        // GET: /Connection/
-
-        public ActionResult Index()
-        {
-            return View(this._connectionRepository.GetConnections());
-        }
-
-        //
-        // GET: /Connection/Details/5
-
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
-
-        //
-        // GET: /Connection/Create
-
-        public ActionResult Create()
-        {
-            return View();
-        } 
-
-        //
-        // POST: /Connection/Create
-
-        [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult Create(FormCollection collection)
-        {
-            ConnectionModel connection = null;
-
-            try
+            if (connection.IsValid)
             {
-                connection = new ConnectionModel();
-                this.UpdateModel(connection);
-                connection.ConnectionParameters.Clear();
-                connection.ConnectionParameters.AddRange(ConnectionParameterModel.FromFormCollection(collection));
-
-                if (connection.IsValid)
+                if (!_connectionRepository.IsValid(connection, out var ruleViolations))
                 {
-                    IEnumerable<RuleViolation> ruleViolations = null;
-                    if (! this._connectionRepository.IsValid(connection, out ruleViolations))
-                    {
-                        ModelState.AddRuleViolations(ruleViolations);
-                        return View(connection);
-                    }
-                    
-                    this._connectionRepository.AddConnection(connection);
-                    this._connectionRepository.Save();
-                }
-                else
-                {
-                    ModelState.AddRuleViolations(connection.GetRuleViolations());
+                    ModelState.AddRuleViolations(ruleViolations);
                     return View(connection);
                 }
-
-                return RedirectToAction("Index");
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        //
-        // GET: /Connection/Edit/5
- 
-        public ActionResult Edit(int id)
-        {
-            ViewResult viewResult = null;
-
-            ConnectionModel connection = this._connectionRepository.GetConnection(id);
-            if (connection == null)
-            {
-                viewResult = View("NotFound", "The specified connection was not found" );
+                _connectionRepository.AddConnection(connection);
+                _connectionRepository.Save();
             }
             else
             {
-                viewResult = View(connection);
+                ModelState.AddRuleViolations(connection.GetRuleViolations());
+                return View(connection);
             }
-
-            return viewResult;
-            
+            return RedirectToAction("Index");
         }
-
-        //
-        // POST: /Connection/Edit/5
-
-        [AcceptVerbs(HttpVerbs.Post)]
-        public ActionResult Edit(int id, FormCollection collection)
+        catch
         {
-            ConnectionModel connection = null;
+            return View();
+        }
+    }
 
-            try
+    public IActionResult Edit(int id)
+    {
+        var connection = _connectionRepository.GetConnection(id);
+        if (connection == null)
+            return View("NotFound", "The specified connection was not found");
+        return View(connection);
+    }
+
+    [HttpPost]
+    public IActionResult Edit(int id, IFormCollection collection)
+    {
+        try
+        {
+            var connection = _connectionRepository.GetConnection(id);
+            if (connection == null)
+                return View("NotFound", "The specified connection was not found");
+
+            connection.Name = collection["Name"];
+            connection.ConnectionParameters.Clear();
+            connection.ConnectionParameters.AddRange(ConnectionParameterModel.FromFormCollection(collection));
+
+            if (connection.IsValid)
             {
-                connection = this._connectionRepository.GetConnection(id);
-                if (connection == null)
+                if (!_connectionRepository.IsValid(connection, out var ruleViolations))
                 {
-                    return View("NotFound", "The specified connection was not found");
-                }
-
-                this.UpdateModel(connection);
-                connection.ConnectionParameters.Clear();
-                connection.ConnectionParameters.AddRange(ConnectionParameterModel.FromFormCollection(collection));
-
-                if (connection.IsValid)
-                {
-                    IEnumerable<RuleViolation> ruleViolations = null;
-                    if (!this._connectionRepository.IsValid(connection, out ruleViolations))
-                    {
-                        ModelState.AddRuleViolations(ruleViolations);
-                        return View(connection);
-                    }
-                    this._connectionRepository.Save();
-                    return RedirectToAction("Index");
-                }
-                else
-                {
-                    ModelState.AddRuleViolations(connection.GetRuleViolations());
+                    ModelState.AddRuleViolations(ruleViolations);
                     return View(connection);
                 }
+                _connectionRepository.Save();
+                return RedirectToAction("Index");
             }
-            catch
+            else
             {
-                return View();
+                ModelState.AddRuleViolations(connection.GetRuleViolations());
+                return View(connection);
             }
+        }
+        catch
+        {
+            return View();
         }
     }
 }
