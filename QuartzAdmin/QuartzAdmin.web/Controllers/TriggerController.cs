@@ -29,7 +29,7 @@ public class TriggerController : Controller
         }
 
         var calRepo = new CalendarRepository(instance);
-        m.Calendar = await calRepo.GetCalendar(m.Trigger.CalendarName);
+        m.Calendar = m.Trigger.CalendarName != null ? await calRepo.GetCalendar(m.Trigger.CalendarName) : null;
         m.Instance = instance;
         ViewData["groupName"] = groupName;
         return View(m);
@@ -50,7 +50,7 @@ public class TriggerController : Controller
         }
 
         var calRepo = new CalendarRepository(instance);
-        m.Calendar = await calRepo.GetCalendar(m.Trigger.CalendarName);
+        m.Calendar = m.Trigger.CalendarName != null ? await calRepo.GetCalendar(m.Trigger.CalendarName) : null;
         ViewData["groupName"] = groupName;
         return View(m);
     }

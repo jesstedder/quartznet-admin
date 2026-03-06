@@ -26,7 +26,7 @@ public class InstanceController : Controller
     public IActionResult Create(IFormCollection collection)
     {
         var instance = new InstanceModel();
-        instance.InstanceName = collection["InstanceName"];
+        instance.InstanceName = collection["InstanceName"].ToString() ?? string.Empty;
 
         foreach (string key in collection.Keys)
         {

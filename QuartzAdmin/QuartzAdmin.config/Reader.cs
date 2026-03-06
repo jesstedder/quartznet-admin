@@ -14,7 +14,7 @@ namespace QuartzAdmin.config
             if (System.Configuration.ConfigurationManager.AppSettings[settingName] == null)
                 return "";
             else
-                return System.Configuration.ConfigurationManager.AppSettings[settingName];
+                return System.Configuration.ConfigurationManager.AppSettings[settingName]!;
         }
 
         //TODO:  Add in config section handlers for encryption
